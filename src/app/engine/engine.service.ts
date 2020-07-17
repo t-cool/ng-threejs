@@ -1,7 +1,12 @@
 import * as THREE from 'three';
+
+import GLTFLoader from 'three-gltf-loader';
+
 import { Injectable, ElementRef, OnDestroy, NgZone } from '@angular/core';
 
+
 @Injectable({ providedIn: 'root' })
+
 export class EngineService implements OnDestroy {
   private canvas: HTMLCanvasElement;
   private renderer: THREE.WebGLRenderer;
@@ -12,6 +17,8 @@ export class EngineService implements OnDestroy {
   private cube: THREE.Mesh;
 
   private frameId: number = null;
+
+  public loader: GLTFLoader;
 
   public constructor(private ngZone: NgZone) {}
 
@@ -38,18 +45,40 @@ export class EngineService implements OnDestroy {
     this.camera = new THREE.PerspectiveCamera(
       75, window.innerWidth / window.innerHeight, 0.1, 1000
     );
-    this.camera.position.z = 5;
+    this.camera.position.z = 4;
     this.scene.add(this.camera);
 
     // soft white light
     this.light = new THREE.AmbientLight( 0x404040 );
-    this.light.position.z = 10;
+    this.light.position.z = 1;
     this.scene.add(this.light);
 
+    // ここからモデルを生成
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     this.cube = new THREE.Mesh( geometry, material );
-    this.scene.add(this.cube);
+    //this.scene.add(this.cube);
+
+    this.loader = new GLTFLoader();
+    this.loader.load(
+      'assets/Duck.gltf',
+      ( gltf ) => {
+        // called when the resource is loaded
+        this.scene.add( gltf.scene );
+      },
+      ( xhr ) => {
+        // called while loading is progressing
+        console.log( `${( xhr.loaded / xhr.total * 100 )}% loaded` );
+      },
+      ( error ) => {
+        // called when loading has errors
+        console.error( 'An error happened', error );
+      },
+    );
+
+    //this.camera.rotation.y += 100
+    
+
 
   }
 
@@ -79,6 +108,8 @@ export class EngineService implements OnDestroy {
     this.cube.rotation.x += 0.01;
     this.cube.rotation.y += 0.01;
     this.renderer.render(this.scene, this.camera);
+    this.renderer.outputEncoding = THREE.GammaEncoding;
+
   }
 
   public resize(): void {
@@ -89,5 +120,6 @@ export class EngineService implements OnDestroy {
     this.camera.updateProjectionMatrix();
 
     this.renderer.setSize( width, height );
+
   }
 }
